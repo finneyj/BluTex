@@ -1,0 +1,55 @@
+{
+	"title":"SCC020 Creative Web Applications",
+	"width":1920,
+	"height":1080,
+	"subtitle":"Introduction to Objects",
+	"author":"Angie Chandler",
+	"contact":"a.k.chandler@lancaster.ac.uk",	
+	"videos":
+	[
+		{"source":"meg.mp4"},
+		{"source":"kickers.mp4"},
+		{"source":"introSCC.mp4"},
+		{"source":"flumflum.mp4"},
+		{"source":"toilet.mp4","rotation":180},
+		{"source":"futsal.mp4"},
+		{"source":"jellyfish.mp4"}
+	],
+	"list":
+	[
+		{
+			"vid":"introSCC.mp4",
+			"name":"introSCC",
+			"start":0, 
+			"end": 18,
+			"volume":0,
+			"scale": 1,
+			"intro": 10
+		},
+		{
+			"vid": ["flumflum.mp4","toilet.mp4"],
+			"name": "twist and swing",
+			"start": [17, 245],
+			"end": [27, 257],
+			"volume":[0.0, 1.0],
+			"scale": [1,1],
+			"multi": true
+		},
+		{"vid":"kickers.mp4","name":"roar","start":17,"end":27,"volume":0.5,"scale": 1},
+		{"vid":"futsal.mp4","name":"goal","start":22, "end": 37,"volume":0,"scale": 1},
+		{"vid":"jellyfish.mp4","name":"jellyfish","start":22, "end": 37,"volume":0,"scale": 1},
+		{
+			"vid": ["meg.mp4","jellyfish.mp4"],
+			"name": "fish",
+			"start": [12, 12],
+			"end": [32, 32],
+			"volume": [0, 0],
+			"x": [0,1200],
+			"y": [0,660],
+			"scale": [1,0.37],
+			"multi": true
+		},
+		{"vid":"flumflum.mp4","name":"twist","start":17, "end": 29,"volume":0, "scale": 1},
+		{"vid":"toilet.mp4","name":"JamieAndChloe","start":245,"end":257,"volume":0, "scale": 1}
+	]
+}

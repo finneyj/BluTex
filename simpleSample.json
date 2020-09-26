@@ -1,0 +1,17 @@
+{
+	"title":"SCC020 Creative Web Applications",
+	"width":1920,
+	"height":1080,
+	"subtitle":"Introduction to Objects",
+	"author":"Angie Chandler",
+	"contact":"a.k.chandler@lancaster.ac.uk",	
+	"videos":
+	[
+		{"source":"introSCC.mp4"}
+	],
+	"list":
+	[
+		{"vid":"introSCC.mp4","name":"introSCC","start":0,"end":18,"volume":1.0,"scale": 1.0,"intro": 10},
+		{"vid":"introSCC.mp4","name":"introSCC","start":0,"end":18,"volume":0.5,"scale": 0.5,"x":200,"y":200}
+	]
+}
