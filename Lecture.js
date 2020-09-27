@@ -1,5 +1,5 @@
 class Lecture{
-	constructor(title,width,height,author,contact,subtitle,startDelay) 
+	constructor(title,width=1920,height=1080,author="",contact="",subtitle="",startDelay=5) 
 	{
 		this.title = title;
 		this.width = width;
@@ -10,31 +10,52 @@ class Lecture{
 		this.startDelay = startDelay;
 
 		this.videos = [];
-		this.clips = [];
-		this.list = [];
+		this.tracks = [];
 	}
-	addVideo(v)
+
+    addVideo(v)
 	{
 		this.videos.push(v);
 	}
-	addClip(c)
+
+    addTrack(t)
 	{
-		this.clips.push(c);
+		this.tracks.push(t);
 	}
-	insertInList(index,c)
+
+
+    /**
+     * Parse an object representation of a Lecture, and return a fully initialised
+     * instance of 
+     */
+    static fromJSON(l)
+    {
+        // Set defaults if not specified
+        if(l.startDelay == null)
+            l.startDelay = 5;
+        if(l.subtitle == null)
+            l.subtitle = "";
+        if(l.author == null)
+            l.author = "";
+        if(l.contact == null)
+            l.contact = "";
+        if(l.title == null)
+            l.title = "title";
+        if(l.width == null)
+            l.width = 1920;
+        if(l.height == null)
+            l.height = 1080;
+
+        return new Lecture(l.title, l.width, l.height, l.author, l.contact, l.subtitle, l.startDelay);
+    }
+    
+    findVideo(sourceName)
 	{
-		if(index >= this.list.length){
-			this.list.push(c);
+		for(let i=0;i<this.videos.length;i++){
+			if(this.videos[i].source.endsWith(sourceName))
+				return this.videos[i];
 		}
-		else{
-			let temp = this.list[index];
-			this.list[index] = c;
-			for(let i=index+1;i<this.list.length-1;i++){
-				this.list[i] = temp;
-				temp = this.list[i+1];
-			}
-			this.list[this.list.length-1] = temp;
-		}
+		return null;
 	}
 	
 }

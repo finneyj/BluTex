@@ -7,11 +7,11 @@
 	"contact":"a.k.chandler@lancaster.ac.uk",	
 	"videos":
 	[
-		{"source":"introSCC.mp4"}
+		{"source":"scc-intro-2020.mp4"}
 	],
 	"list":
 	[
-		{"vid":"introSCC.mp4","name":"introSCC","start":0,"end":18,"volume":1.0,"scale": 1.0,"intro": 10},
-		{"vid":"introSCC.mp4","name":"introSCC","start":0,"end":18,"volume":0.5,"scale": 0.5,"x":200,"y":200}
+		{"vid":"scc-intro-2020.mp4","name":"introSCC","start":0,"end":18,"volume":1.0,"scale": 1.0,"intro": 10},
+		{"vid":"scc-intro-2020.mp4","name":"introSCC","start":0,"end":18,"volume":0.5,"scale": 0.5,"x":200,"y":200}
 	]
 }

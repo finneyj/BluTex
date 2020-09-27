@@ -61,6 +61,7 @@ videoEditor - intended to be the final version - unnecessary UI elements are rem
 	</canvas>
 
 	<script src="Lecture.js"></script>
+	<script src="Track.js"></script>
 	<script src="Video.js"></script>
 	<script src="Clip.js"></script>
 	<script>
@@ -73,7 +74,8 @@ videoEditor - intended to be the final version - unnecessary UI elements are rem
 	
 	var lecture = null;
 	var c = document.getElementById("myCanvas");
-	var ctx = c.getContext("2d");
+    var ctx = c.getContext("2d");
+    var timeVar = null;
 	
 	
 	//load existing json fil
@@ -88,164 +90,25 @@ videoEditor - intended to be the final version - unnecessary UI elements are rem
         fr.readAsText(input.files[0]);  
 		
 		fr.onload = function() {
-			//display the results
-			console.log(fr.result);
-			
-			l = JSON.parse(fr.result);
+            
+            // Load an object representation of the JSON file. This just a simple object though, so we parse
+            // into our Lecture, Video and Clip classes.
+            l = JSON.parse(fr.result);
 
-			//create lecture
-			if(l.startDelay == null)
-				l.startDelay = 5;
-			if(l.subtitle == null)
-				l.subtitle = "";
-			if(l.author == null)
-				l.author = "";
-			if(l.contact == null)
-				l.contact = "";
-			if(l.title == null)
-				l.title = "title";
-			if(l.width == null)
-				l.width = 1920;
-			if(l.height == null)
-				l.height = 1080;
-			lecture = new Lecture(l.title,l.width,l.height,l.author,l.contact,l.subtitle,l.startDelay);
-			
-			//set up videos, canvases and clips
-			for(let i=0;i<l.videos.length;i++){
-				let dim = [true,true];
-				let vid = createVideoElement(l.videos[i].source);
-				vid.id = l.videos[i].source.substring(0,l.videos[i].source.lastIndexOf("."));
-				
-				if(l.videos[i].x == null)
-					l.videos[i].x = xDefault;
-				if(l.videos[i].y == null)
-					l.videos[i].y = yDefault;
-				if(l.videos[i].rotation == null)
-					l.videos[i].rotation = 0;
-					
-				vid.width = 0;
-				
-				let v = new Video(vid,l.videos[i].x,l.videos[i].y,l.videos[i].w,l.videos[i].h,l.videos[i].rotation);
-				lecture.addVideo(v);
-							
-				if(v.rotation > 0)
-				{
-					v.canvas = document.createElement("canvas");
-					v.ctx = v.canvas.getContext("2d");
-					v.canvas.width = c.width;
-					v.canvas.height = c.height;
+            // Create Lecture instance, setting any undefined attributes to their default values.
+            lecture = Lecture.fromJSON(l);
+            
+            // Create Video instance for each video listed, setting any undefined attributes to their default values.
+			for(let i=0;i<l.videos.length;i++)
+                lecture.addVideo(Video.fromJSON(l.videos[i]));
 
-					v.ctx.translate(c.width/2,c.height/2);
-					v.ctx.rotate(v.rotation*Math.PI/180);
-					v.ctx.translate(-c.width/2,-c.height/2);
-				}
-			}
-			for(let i=0;i<l.list.length;i++){
-				let clip = null;
-				if(l.list[i].multi){
-					//local scaling - per clip
-					let x = [];
-					let y = [];
-					let scale = [];
-					for(let j=0;j<l.list[i].vid.length;j++){
-						//find the vid
-						let tempV = findVid(l.list[i].vid[j]);
-						
-						//sort out scaling
-						if(l.list[i].x == null)
-							x[j] = parseInt(tempV.x);
-						else
-							x[j] = l.list[i].x[j];
-						if(l.list[i].y == null)
-							y[j] = tempV.y;
-						else
-							y[j] = l.list[i].y[j];
-						if(l.list[i].scale == null)
-							scale[j] = 1;				
-						else
-							scale[j] = l.list[i].scale[j];
-							
-					}
-					clip = new Clip(l.list[i].name,l.list[i].start,l.list[i].end,l.list[i].vid,l.list[i].volume,x,y,scale,true);				
-				}
-				else if(l.list[i].intro != null)
-				{
-					//find the video
-					let tempV = findVid(l.list[i].vid);
-					
-					//and sort the scaling
-					if(l.list[i].x == null)
-						l.list[i].x = tempV.x;
-					if(l.list[i].y == null)
-						l.list[i].y = tempV.y;
-					if(l.list[i].scale == null)
-						l.list[i].scale = 1;				
-
-					clip = new Clip(l.list[i].name,l.list[i].start,l.list[i].end,l.list[i].vid,l.list[i].volume,l.list[i].x,l.list[i].y,l.list[i].scale,false,l.list[i].intro);									
-
-					//layout the intro - text from lecture title 
-					//in the future possibly have overlays - more general
-					clip.canvas = document.createElement("canvas");
-					clip.ctx = clip.canvas.getContext("2d");
-					clip.canvas.width = c.width;
-					clip.canvas.height = c.height;
-					
-					//draw the title info on the canvas
-					//could easily be reconfigured. 
-				/*	clip.ctx.font = "80px Calibri";
-					clip.ctx.fillStyle = "white";
-					clip.ctx.fillText(l.title,220,180);
-					clip.ctx.font = "40px Calibri";
-					clip.ctx.fillText(l.subtitle,220,240);
-					clip.ctx.fillStyle = "Gainsboro";
-					clip.ctx.font = "40px Calibri";
-					clip.ctx.textAlign = "right";
-					clip.ctx.fillText(l.author,(1920-320),860);
-					clip.ctx.fillText(l.contact,(1920-320),920);
-				*/
-					clip.ctx.font = "40px Calibri";
-					clip.ctx.fillStyle = "LightSteelBlue";
-					clip.ctx.fillText(l.title,300,800);
-					clip.ctx.font = "30px Calibri";
-					clip.ctx.fillText(l.subtitle,300,840);
-					clip.ctx.fillText(l.author,300,900);
-					clip.ctx.fillText(l.contact,300,935);
-
-				}
-				else{
-					//sort out scaling
-					
-					//find the video
-					let tempV = findVid(l.list[i].vid);
-					
-					//and sort the scaling
-					if(l.list[i].x == null)
-						l.list[i].x = tempV.x;
-					if(l.list[i].y == null)
-						l.list[i].y = tempV.y;
-					if(l.list[i].scale == null)
-						l.list[i].scale = 1;				
-
-					clip = new Clip(l.list[i].name,l.list[i].start,l.list[i].end,l.list[i].vid,l.list[i].volume,l.list[i].x,l.list[i].y,l.list[i].scale);						
-				}
-
-				lecture.insertInList(i,clip);
-			}
-			for(let i=0;i<l.list.length;i++){
-				let clipName = document.createElement("option");
-				if(l.list[i].multi){
-					clipName.text = l.list[i].name+" ("+(l.list[i].end[0]-l.list[i].start[0])+")";
-				}
-				else
-					clipName.text = l.list[i].name+" ("+(l.list[i].end-l.list[i].start)+")";
-				document.getElementById("clipName").options.add(clipName);
-			}			
-		};
+            // Create a Track instance for each scheduled clip, recursively creating underlying clips.
+            for(let i=0;i<l.tracks.length;i++)
+                lecture.addTrack(Track.fromJSON(l.tracks[i]));
+        };
 		
 	}
 
-
-	
 	//create the video element that allows this video to be loaded 
 	//this will add the video to the bottom of the webpage
 	function createVideoElement(newVid)
@@ -263,8 +126,6 @@ videoEditor - intended to be the final version - unnecessary UI elements are rem
 		return vidNode;
 	}
 
-	
-	
 
 /*	
 	This section deals with video playback and the view of the canvas
@@ -272,7 +133,6 @@ videoEditor - intended to be the final version - unnecessary UI elements are rem
 	//get reference to canvas - just use these two lines
 	//this is going to be the background context, each video has its own
 	//var currentVid = null;
-	var timeVar;
 
 	function play()
 	{	
@@ -280,78 +140,74 @@ videoEditor - intended to be the final version - unnecessary UI elements are rem
 		c.requestFullscreen();
 
 		//5 secs to wait for full screen warning to leave screen
-		setTimeout(startNew, lecture.startDelay*1000);
-		
-		//startNew(0);	
-	}
-	
-	function startNew(input=0)
-	{
-		//multiple videos in this clip
-		if(lecture.list[input].multi){
-			let currentVid = [];
-			for(let i=0;i<lecture.list[input].vid.length;i++){
-				let tempVid = findVid(lecture.list[input].vid[i]);
-				tempVid.vid.volume = lecture.list[input].volume[i];
-				tempVid.vid.currentTime = lecture.list[input].start[i];				
-				tempVid.vid.play();
-				
-				currentVid.push(tempVid);
-			}
-						
-			drawMany(currentVid,input);
-		}
-		else{ //only one video
-			let currentVid = findVid(lecture.list[input].vid);
-			currentVid.vid.volume = lecture.list[input].volume;
-			currentVid.vid.currentTime = lecture.list[input].start;
-			currentVid.vid.play();
-			
-			draw(currentVid,input);
-		}
-	
-	}
-	
-	
-	
-	function findVid(source)
-	{
-		for(let i=0;i<lecture.videos.length;i++){
-			if(lecture.videos[i].source.endsWith(source))
-				return lecture.videos[i];
-		}
-		return null;
+        setTimeout(startPlaying, lecture.startDelay*1000);
+    }
+    
+    function startPlaying()
+    {
+        for (i=0; i<lecture.tracks.length; i++)
+        {
+            lecture.tracks[i].context.clipIndex = 0;
+            startClip(lecture.tracks[i]);
+        }
 
+        render();
+    }
+    
+    function render()
+    {
+        ctx.clearRect(0,0,c.width,c.height);
+
+        for (i=0; i<lecture.tracks.length; i++) 
+            draw(lecture.tracks[i]);
+                    
+		timeVar = setTimeout(render,20);
+    }
+
+	function startClip(track)
+	{
+        clip = track.clips[track.context.clipIndex];
+
+        video = lecture.findVideo(clip.vid);
+        video.vid.volume = clip.volume;
+        video.vid.currentTime = clip.start;
+        video.vid.play();
+
+        track.context.video = video;
 	}
 
-	function draw(video, listIndex)
+	function draw(track)
 	{
-		let clip = lecture.list[listIndex];
+        let video = track.context.video;
+		let clip = track.clips[track.context.clipIndex];
 
+        // if we;ve completed playing the track, ther'es nothing to do.
+        if(track.context.clipIndex >= track.clips.length)
+            return false;
+
+        // if the video width has yet to be set, try to infer it from the HTML Video elment
 		if(video.w == 0)
 		{
 			video.w = video.vid.videoWidth;
 			video.h = video.vid.videoHeight;
 		}
 		
-		//end of video clip
+		// If we've reached the end of video the clip, move on to the next clip (if available)
 		if(video.vid.currentTime >= clip.end)
 		{
 			video.vid.pause();
-			clearTimeout(timeVar);
 			
-			listIndex++;
-			if(listIndex < lecture.list.length){
-				startNew(listIndex);
+			track.context.clipIndex++;
+			if(track.context.clipIndex < track.clips.length){
+				startClip(track);
 			}
 			return false;
 		}
 		
 		if(video.vid.paused || video.vid.ended) 
 			return false;
-			
-		ctx.clearRect(0,0,c.width,c.height);
-		transition(video.vid.currentTime,clip.start,clip.end,listIndex);
+        
+		transition(video.vid.currentTime,clip.start,clip.end);
 			
 		if(video.w != 0 && video.vid.currentTime > clip.start && video.vid.currentTime < clip.end){
 			let xScale = clip.scale;
@@ -368,7 +224,7 @@ videoEditor - intended to be the final version - unnecessary UI elements are rem
 				ctx.drawImage(video.vid,clip.x,clip.y,c.width*xScale,c.height*yScale);
 
 			
-			if(clip.intro != 0 && video.vid.currentTime > clip.intro){
+			if(clip.intro != null && video.vid.currentTime > clip.intro){
 				let localAlpha = ctx.globalAlpha;
 				if(video.vid.currentTime - clip.intro < 1)
 					ctx.globalAlpha = video.vid.currentTime - clip.intro;
@@ -376,85 +232,11 @@ videoEditor - intended to be the final version - unnecessary UI elements are rem
 					ctx.globalAlpha = localAlpha;
 				ctx.drawImage(clip.canvas,0,0,c.width,c.height);		
 				ctx.globalAlpha = localAlpha;
-			}
-			
-			
+			}	
 		}
-				
-		timeVar = setTimeout(draw,20,video,listIndex);
-		
 	}
 	
-	
-	function drawMany(video,listIndex){
-		let clip = lecture.list[listIndex];
-		let endCount = 0;
-		let readyCount = 0;
-		
-		for(let i=0;i<video.length;i++){
-				
-			//end of videos
-			if(video[i].vid.currentTime >= clip.end[i]){
-				video[i].vid.pause();
-				endCount++;	
-			}
-
-			if(video[i].w == 0)
-			{
-				video[i].w = video[i].vid.videoWidth;
-				video[i].h = video[i].vid.videoHeight;				
-			}
-			
-		}
-			
-		//all videos of group have ended
-		if(endCount == video.length){
-			clearTimeout(timeVar);
-			
-			listIndex++;
-			if(listIndex < lecture.list.length){
-				startNew(listIndex);
-			}
-			return false;
-		}
-
-		endCount = 0;
-		
-		ctx.clearRect(0,0,c.width,c.height);
-		for(let i=0;i<video.length;i++)
-		{
-			if(video[i].vid.paused || video[i].vid.ended)
-				endCount++;
-		
-			transition(video[i].vid.currentTime,clip.start[i],clip.end[i],listIndex);
-
-			if(video[i].w != 0 && video[i].vid.currentTime > clip.start[i] && video[i].vid.currentTime < clip.end[i])
-			{
-				let xScale = clip.scale[i];
-				let yScale = clip.scale[i];
-				
-				if(video[i].w < video[i].h)
-					xScale = clip.scale[i]*video[i].w/video[i].h;
-					
-				if(video[i].rotation > 0)
-				{
-					video[i].ctx.drawImage(video[i].vid,0,0,c.width*xScale,c.height*yScale);
-					ctx.drawImage(video[i].canvas,clip.x[i],clip.y[i],video[i].canvas.width,video[i].canvas.height);				
-				}
-				else
-					ctx.drawImage(video[i].vid,clip.x[i],clip.y[i],c.width*xScale,c.height*yScale);				
-			}
-		}
-		if(endCount == video.length)
-			return false;
-			
-		timeVar = setTimeout(drawMany,20,video,listIndex);
-		
-	}
-		
-	
-	
-	function transition(time,start,end,vidCount)
+	function transition(time,start,end)
 	{
 		if(time > start && time < start + 1)
 			ctx.globalAlpha = time - start;
@@ -464,31 +246,33 @@ videoEditor - intended to be the final version - unnecessary UI elements are rem
 			ctx.globalAlpha = 1.0;
 	}
 	
-	
-	
 	function skipToTime()
 	{
-		let input = clipName.selectedIndex;
-
+		let clipName = document.getElementById("clipName").text;
 		let num = parseInt(document.getElementById("skipTime").value);
-		
-		if(lecture.list[input].multi){
-			for(let j=0;j<lecture.list[input].vid.length;j++){
-				lecture.list[input].start[j] += num;
-				if(lecture.list[input].start[j] > lecture.list[input].end[j])
-					lecture.list[input].start[j] = lecture.list[input].end[j] - 1;
-			}
-		}
-		else{
-			lecture.list[input].start += num;
-			if(lecture.list[input].start > lecture.list[input].end)
-				lecture.list[input].start = lecture.list[input].end - 1;		
-		}
+        let track = null;
+        let clip = null;
+        let clipIndex = 0;
+
+        for (let i=0; i<lecture.tracks.length; i++)
+        {
+            track = lecture.tracks[i];
+
+            for(let j=0;j<track.clips.length;j++)
+            {
+                if(track.clips[j].getLabel()==clipName)
+                {
+                    clipIndex = j;
+                    clip = track.clips[j];
+                }
+            }
+        }
 				
 		stopAll();
 		c.width = 480;
 		c.height = 270;
-		
+        
+        // reset any virtual canvases
 		for(let i=0;i<lecture.videos.length;i++){
 			if(lecture.videos[i].canvas != null)
 			{
@@ -498,17 +282,17 @@ videoEditor - intended to be the final version - unnecessary UI elements are rem
 				lecture.videos[i].ctx.translate(c.width/2,c.height/2);
 				lecture.videos[i].ctx.rotate(lecture.videos[i].rotation*Math.PI/180);
 				lecture.videos[i].ctx.translate(-c.width/2,-c.height/2);
-
 			}
 		}
-		
-		startNew(input);	
-		
+        
+        // TODO: Need to start ALL tracks, and skip forward in time to the appropriate position...
+        track.context.clipIndex = clipIndex;
+		startClip(track);	
 	}
 	
 	function stopAll()
 	{
-		clearTimeout(timeVar);
+        clearTimeout(timeVar);
 
 		for(let i=0;i<lecture.videos.length;i++)
 		{
