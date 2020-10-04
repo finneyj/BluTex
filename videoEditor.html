@@ -76,6 +76,7 @@ videoEditor - intended to be the final version - unnecessary UI elements are rem
 	var c = document.getElementById("myCanvas");
     var ctx = c.getContext("2d");
     var timeVar = null;
+    var globalScale = 1.0;
 	
 	
 	//load existing json fil
@@ -136,6 +137,8 @@ videoEditor - intended to be the final version - unnecessary UI elements are rem
 
 	function play()
 	{	
+        globalScale = 1.0;
+
 		stopAll();
 		c.requestFullscreen();
 
@@ -267,11 +270,11 @@ videoEditor - intended to be the final version - unnecessary UI elements are rem
                     xScale = clip.scale*video.w/video.h;
                 
                 if(video.rotation > 0){
-                    video.ctx.drawImage(video.vid,clip.x,clip.y,c.width*xScale,c.height*yScale);
-                    ctx.drawImage(video.canvas,0,0,c.width,c.height);
+                    video.ctx.drawImage(video.vid,0,0,c.width*xScale,c.height*yScale);
+                    ctx.drawImage(video.canvas,clip.x*globalScale,clip.y*globalScale,c.width*xScale*globalScale,c.height*yScale*globalScale);
                 }
                 else	
-                    ctx.drawImage(video.vid,clip.x,clip.y,c.width*xScale,c.height*yScale);
+                    ctx.drawImage(video.vid,clip.x*globalScale,clip.y*globalScale,c.width*xScale*globalScale,c.height*yScale*globalScale);
 
                 
                 if(clip.intro != null && video.vid.currentTime > clip.intro){
@@ -280,7 +283,7 @@ videoEditor - intended to be the final version - unnecessary UI elements are rem
                         ctx.globalAlpha = video.vid.currentTime - clip.intro;
                     else
                         ctx.globalAlpha = localAlpha;
-                    ctx.drawImage(clip.canvas,0,0,c.width,c.height);		
+                    ctx.drawImage(clip.canvas,0,0,c.width*xScale*globalScale,c.height*xScale*globalScale);		
                     ctx.globalAlpha = localAlpha;
                 }	
             }
@@ -320,25 +323,12 @@ videoEditor - intended to be the final version - unnecessary UI elements are rem
         }
 				
 		stopAll();
-		c.width = 480;
-		c.height = 270;
-        
-        // reset any virtual canvases
-		for(let i=0;i<lecture.videos.length;i++){
-			if(lecture.videos[i].canvas != null)
-			{
-				lecture.videos[i].canvas.width = c.width;
-				lecture.videos[i].canvas.height = c.height;
-				
-				lecture.videos[i].ctx.translate(c.width/2,c.height/2);
-				lecture.videos[i].ctx.rotate(lecture.videos[i].rotation*Math.PI/180);
-				lecture.videos[i].ctx.translate(-c.width/2,-c.height/2);
-			}
-		}
-        
+
         // TODO: Need to start ALL tracks, and skip forward in time to the appropriate position...
         track.context.clipIndex = clipIndex;
-		startClip(track);	
+        globalScale = 0.5;
+
+        startPlaying();
 	}
 	
 	function stopAll()
