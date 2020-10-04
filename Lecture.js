@@ -56,6 +56,18 @@ class Lecture{
 				return this.videos[i];
 		}
 		return null;
-	}
+    }
+    
+    findClip(name)
+    {
+        for (let i=0; i<this.tracks.length; i++)
+        {
+            clip = this.tracks[i].findClip(name);
+            if (clip != null)
+                return clip;
+        }
+
+        return null;
+    }
 	
 }

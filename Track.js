@@ -33,7 +33,18 @@ class Track{
 	addClip(clip)
 	{
 		clips.push(clip);
-	}
+    }
+    
+    findClip(name)
+    {
+        for (let i=0; i<this.clips.length; i++)
+        {
+            if (this.clips[i].name == name)
+                return this.clips[i];
+        }
+
+        return null;
+    }
 
     static fromJSON(t)
     {

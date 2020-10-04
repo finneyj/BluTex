@@ -1,19 +1,33 @@
 class Clip{
-	constructor(name,start,end,vid,volume,x,y,scale,intro=null) 
-	{
-		this.vid = vid;
-		this.name = name;
-		this.volume = volume;
-        
-        this.x = x;
-		this.y = y;
-        this.scale = scale;
 
-		//text intro
+    static CLIP_TYPE_VIDEO = 1;
+    static CLIP_TYPE_WAIT_FOR = 2;
+    static CLIP_TYPE_ACTION = 3;
+    static DEFAULT_BASENAME = "Clip ";
+    static DEFAULT_BASENAME_INDEX = 1;
+
+	constructor(vid,name,start,end,volume,x,y,scale,type,delay=0,intro=null) 
+	{
+        this.vid = vid;
+        this.type = type;
+        this.delay = delay;
+		this.name = name;
 		this.intro = intro;
         this.canvas = null;
         this.ctx = null;
 
+        this._x = x;
+		this._y = y;
+        this._scale = scale;
+        this._volume = volume;        
+
+        // Ensure we have a copy of mutable state
+        this.reset();
+
+        if (this.name == null)
+            this.name = Clip.DEFAULT_BASENAME + Clip.DEFAULT_BASENAME_INDEX++;
+
+        // Visualise metadata if requested
         if (intro != null)
         {
             this.canvas = document.createElement("canvas");
@@ -43,6 +57,16 @@ class Clip{
         document.getElementById("clipName").options.add(clipName);
     }	
 
+    reset()
+    {
+        this.x = this._x;
+		this.y = this._y;
+        this.scale = this._scale;
+        this.volume = this._volume;        
+        this.position = null;
+        this.started = false;
+    }
+
     xTransform(x)
     {
         return this.x + x * this.scale;
@@ -58,20 +82,55 @@ class Clip{
         return this.name +" (" + (this.end - this.start) + ")";
     }
 
+    isVideo()
+    {
+        return (this.type == Clip.CLIP_TYPE_VIDEO);
+    }
+
+    isWaitFor()
+    {
+        return (this.type == Clip.CLIP_TYPE_WAIT_FOR);
+    }
+
+    isAction()
+    {
+        return (this.type == Clip.CLIP_TYPE_ACTION);
+    }
+
+    hasStarted()
+    {
+        return (this.started);
+    }
+
     static fromJSON(l)
     {
-        // Find the video associated with this clip
-        let v = lecture.findVideo(l.vid);
-        
-        // Apply any necessary default scaling
-        if(l.x == null)
-            l.x = v.x;
-        if(l.y == null)
-            l.y = v.y;
-        if(l.scale == null)
-            l.scale = 1;			
+        // Test if we have a vid, waitFor or action element
+        if (l.vid != null)
+        {
+            // Find the video associated with this clip
+            let v = lecture.findVideo(l.vid);
+            
+            // Apply any necessary default scaling
+            if(l.x == null)
+                l.x = v.x;
+            if(l.y == null)
+                l.y = v.y;
+            if(l.scale == null)
+                l.scale = 1;			
 
-        return new Clip(l.name, l.start, l.end, l.vid, l.volume, l.x, l.y, l.scale, l.intro);						
+            return new Clip(l.vid, l.name, l.start, l.end, l.volume, l.x, l.y, l.scale, Clip.CLIP_TYPE_VIDEO, 0, l.intro);						
+        }
+
+        if (l.waitFor != null)
+        {
+            return new Clip(l.waitFor, l.name, null, null, null, null, null, null, Clip.CLIP_TYPE_WAIT_FOR, l.delay, null);	
+        }
+
+        if (l.action != null)
+        {
+            return new Clip(l.action, l.name, null, null, l.volume, l.x, l.y, l.scale, Clip.CLIP_TYPE_ACTION, 0, null);						            
+        }
+
     }
 
 }

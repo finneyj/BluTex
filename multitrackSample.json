@@ -16,6 +16,8 @@
             {"vid":"scc-intro-2020.mp4","name":"intro","start":0,"end":18,"volume":1.0,"scale": 1.0,"intro": 10}
         ]},
         {"clips":[
+            {"waitFor":"intro","delay":2.0},
+            {"action":"intro","scale":0.5},
             {"vid":"scc-outro-2020.mp4","name":"outro","start":0,"end":12,"volume":1.0,"scale": 0.25,"x":1400,"y":750}
         ]}
     ]

@@ -145,7 +145,7 @@ videoEditor - intended to be the final version - unnecessary UI elements are rem
     
     function startPlaying()
     {
-        for (i=0; i<lecture.tracks.length; i++)
+        for (let i=0; i<lecture.tracks.length; i++)
         {
             lecture.tracks[i].context.clipIndex = 0;
             startClip(lecture.tracks[i]);
@@ -158,7 +158,7 @@ videoEditor - intended to be the final version - unnecessary UI elements are rem
     {
         ctx.clearRect(0,0,c.width,c.height);
 
-        for (i=0; i<lecture.tracks.length; i++) 
+        for (let i=0; i<lecture.tracks.length; i++) 
             draw(lecture.tracks[i]);
                     
 		timeVar = setTimeout(render,20);
@@ -167,13 +167,18 @@ videoEditor - intended to be the final version - unnecessary UI elements are rem
 	function startClip(track)
 	{
         clip = track.clips[track.context.clipIndex];
+        clip.reset();
+        clip.started = true;
 
-        video = lecture.findVideo(clip.vid);
-        video.vid.volume = clip.volume;
-        video.vid.currentTime = clip.start;
-        video.vid.play();
+        if (clip.isVideo())
+        {
+            video = lecture.findVideo(clip.vid);
+            video.vid.volume = clip.volume;
+            video.vid.currentTime = clip.start;
+            video.vid.play();
 
-        track.context.video = video;
+            track.context.video = video;
+        }
 	}
 
 	function draw(track)
@@ -185,55 +190,101 @@ videoEditor - intended to be the final version - unnecessary UI elements are rem
         if(track.context.clipIndex >= track.clips.length)
             return false;
 
-        // if the video width has yet to be set, try to infer it from the HTML Video elment
-		if(video.w == 0)
-		{
-			video.w = video.vid.videoWidth;
-			video.h = video.vid.videoHeight;
-		}
-		
-		// If we've reached the end of video the clip, move on to the next clip (if available)
-		if(video.vid.currentTime >= clip.end)
-		{
-			video.vid.pause();
-			
-			track.context.clipIndex++;
-			if(track.context.clipIndex < track.clips.length){
-				startClip(track);
-			}
-			return false;
-		}
-		
-		if(video.vid.paused || video.vid.ended) 
-			return false;
+        if (clip.isWaitFor())
+        {
+            w = lecture.findClip(clip.vid);
         
-		transition(video.vid.currentTime,clip.start,clip.end);
-			
-		if(video.w != 0 && video.vid.currentTime > clip.start && video.vid.currentTime < clip.end){
-			let xScale = clip.scale;
-			let yScale = clip.scale;
-				
-			if(video.w < video.h)
-				xScale = clip.scale*video.w/video.h;
-			
-			if(video.rotation > 0){
-				video.ctx.drawImage(video.vid,clip.x,clip.y,c.width*xScale,c.height*yScale);
-				ctx.drawImage(video.canvas,0,0,c.width,c.height);
-			}
-			else	
-				ctx.drawImage(video.vid,clip.x,clip.y,c.width*xScale,c.height*yScale);
+            if (w != null && w.hasStarted() && w.position >= clip.delay)
+            {
+                track.context.clipIndex++;
+                if(track.context.clipIndex < track.clips.length)
+                    startClip(track);
+            }
+            
+            return false;
+        }
 
-			
-			if(clip.intro != null && video.vid.currentTime > clip.intro){
-				let localAlpha = ctx.globalAlpha;
-				if(video.vid.currentTime - clip.intro < 1)
-					ctx.globalAlpha = video.vid.currentTime - clip.intro;
-				else
-					ctx.globalAlpha = localAlpha;
-				ctx.drawImage(clip.canvas,0,0,c.width,c.height);		
-				ctx.globalAlpha = localAlpha;
-			}	
-		}
+        if (clip.isAction())
+        {
+            w = lecture.findClip(clip.vid);
+            if (w != null)
+            {
+                // Change the target clips attributes to any specified in this clip
+                if (clip.x != null)
+                    w.x = clip.x;
+
+                if (clip.y != null)
+                    w.y = clip.y;
+
+                if (clip.scale != null)
+                    w.scale = clip.scale;
+
+                if (clip.volume != null)
+                    w.volume = clip.volume;
+            }
+            
+            track.context.clipIndex++;
+            if(track.context.clipIndex < track.clips.length)
+                startClip(track);
+
+            return false;
+        }
+
+        if (clip.isVideo())
+        {
+            //Snashot cutrrent playout time
+            clip.position = video.vid.currentTime;
+
+            // if the video width has yet to be set, try to infer it from the HTML Video elment
+            if(video.w == 0)
+            {
+                video.w = video.vid.videoWidth;
+                video.h = video.vid.videoHeight;
+            }
+            
+            // If we've reached the end of video the clip, move on to the next clip (if available)            
+            if(video.vid.currentTime >= clip.end)
+            {
+                video.vid.pause();
+                
+                track.context.clipIndex++;
+                if(track.context.clipIndex < track.clips.length){
+                    startClip(track);
+                }
+                return false;
+            }
+            
+            if(video.vid.paused || video.vid.ended) 
+                return false;
+            
+            transition(video.vid.currentTime,clip.start,clip.end);
+                
+            if(video.w != 0 && video.vid.currentTime > clip.start && video.vid.currentTime < clip.end){
+                let xScale = clip.scale;
+                let yScale = clip.scale;
+                    
+                if(video.w < video.h)
+                    xScale = clip.scale*video.w/video.h;
+                
+                if(video.rotation > 0){
+                    video.ctx.drawImage(video.vid,clip.x,clip.y,c.width*xScale,c.height*yScale);
+                    ctx.drawImage(video.canvas,0,0,c.width,c.height);
+                }
+                else	
+                    ctx.drawImage(video.vid,clip.x,clip.y,c.width*xScale,c.height*yScale);
+
+                
+                if(clip.intro != null && video.vid.currentTime > clip.intro){
+                    let localAlpha = ctx.globalAlpha;
+                    if(video.vid.currentTime - clip.intro < 1)
+                        ctx.globalAlpha = video.vid.currentTime - clip.intro;
+                    else
+                        ctx.globalAlpha = localAlpha;
+                    ctx.drawImage(clip.canvas,0,0,c.width,c.height);		
+                    ctx.globalAlpha = localAlpha;
+                }	
+            }
+        }
 	}
 	
 	function transition(time,start,end)
