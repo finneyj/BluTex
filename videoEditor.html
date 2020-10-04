@@ -77,8 +77,9 @@ videoEditor - intended to be the final version - unnecessary UI elements are rem
     var ctx = c.getContext("2d");
     var timeVar = null;
     var globalScale = 1.0;
-	
-	
+	var globalTime = 0.0;
+    var seeking = false;
+    
 	//load existing json fil
 	function openJson(input)
 	{
@@ -148,6 +149,8 @@ videoEditor - intended to be the final version - unnecessary UI elements are rem
     
     function startPlaying()
     {
+        globalTime = 0.0;
+
         for (let i=0; i<lecture.tracks.length; i++)
         {
             lecture.tracks[i].context.clipIndex = 0;
@@ -161,17 +164,31 @@ videoEditor - intended to be the final version - unnecessary UI elements are rem
     {
         ctx.clearRect(0,0,c.width,c.height);
 
-        for (let i=0; i<lecture.tracks.length; i++) 
-            draw(lecture.tracks[i]);
+        do
+        {
+            for (let i=0; i<lecture.tracks.length; i++) 
+                draw(lecture.tracks[i]);
+
+            globalTime += 0.020;
+        } while(seeking);
                     
 		timeVar = setTimeout(render,20);
+    }
+
+    function seekComplete(track)
+    {
+        let video = track.context.video;
+        let clip = track.clips[track.context.clipIndex];
+        
+        if (clip.isVideo())
+            video.vid.currentTime = clip.position;
     }
 
 	function startClip(track)
 	{
         clip = track.clips[track.context.clipIndex];
         clip.reset();
-        clip.started = true;
+        clip.started = globalTime;
 
         if (clip.isVideo())
         {
@@ -235,8 +252,21 @@ videoEditor - intended to be the final version - unnecessary UI elements are rem
 
         if (clip.isVideo())
         {
-            //Snashot cutrrent playout time
-            clip.position = video.vid.currentTime;
+            if (seeking)
+                clip.position = globalTime - clip.started;
+            else
+                clip.position = video.vid.currentTime;            
+
+            if (seeking && clip.seekTime != null && clip.position >= clip.seekTime)
+            {
+                seeking = false;
+                clip.seekTime = null;
+
+                for (let i=0; i<lecture.tracks.length; i++) 
+                    seekComplete(lecture.tracks[i]);
+
+                return false;
+            }
 
             // if the video width has yet to be set, try to infer it from the HTML Video elment
             if(video.w == 0)
@@ -246,7 +276,7 @@ videoEditor - intended to be the final version - unnecessary UI elements are rem
             }
             
             // If we've reached the end of video the clip, move on to the next clip (if available)            
-            if(video.vid.currentTime >= clip.end)
+            if(clip.position >= clip.end)
             {
                 video.vid.pause();
                 
@@ -259,33 +289,36 @@ videoEditor - intended to be the final version - unnecessary UI elements are rem
             
             if(video.vid.paused || video.vid.ended) 
                 return false;
-            
-            transition(video.vid.currentTime,clip.start,clip.end);
-                
-            if(video.w != 0 && video.vid.currentTime > clip.start && video.vid.currentTime < clip.end){
-                let xScale = clip.scale;
-                let yScale = clip.scale;
-                    
-                if(video.w < video.h)
-                    xScale = clip.scale*video.w/video.h;
-                
-                if(video.rotation > 0){
-                    video.ctx.drawImage(video.vid,0,0,c.width*xScale,c.height*yScale);
-                    ctx.drawImage(video.canvas,clip.x*globalScale,clip.y*globalScale,c.width*xScale*globalScale,c.height*yScale*globalScale);
-                }
-                else	
-                    ctx.drawImage(video.vid,clip.x*globalScale,clip.y*globalScale,c.width*xScale*globalScale,c.height*yScale*globalScale);
 
-                
-                if(clip.intro != null && video.vid.currentTime > clip.intro){
-                    let localAlpha = ctx.globalAlpha;
-                    if(video.vid.currentTime - clip.intro < 1)
-                        ctx.globalAlpha = video.vid.currentTime - clip.intro;
-                    else
+            if (!seeking)
+            {
+                transition(video.vid.currentTime,clip.start,clip.end);
+                    
+                if(video.w != 0 && video.vid.currentTime > clip.start && video.vid.currentTime < clip.end){
+                    let xScale = clip.scale;
+                    let yScale = clip.scale;
+                        
+                    if(video.w < video.h)
+                        xScale = clip.scale*video.w/video.h;
+                    
+                    if(video.rotation > 0){
+                        video.ctx.drawImage(video.vid,0,0,c.width*xScale,c.height*yScale);
+                        ctx.drawImage(video.canvas,clip.x*globalScale,clip.y*globalScale,c.width*xScale*globalScale,c.height*yScale*globalScale);
+                    }
+                    else	
+                        ctx.drawImage(video.vid,clip.x*globalScale,clip.y*globalScale,c.width*xScale*globalScale,c.height*yScale*globalScale);
+
+                    
+                    if(clip.intro != null && video.vid.currentTime > clip.intro){
+                        let localAlpha = ctx.globalAlpha;
+                        if(video.vid.currentTime - clip.intro < 1)
+                            ctx.globalAlpha = video.vid.currentTime - clip.intro;
+                        else
+                            ctx.globalAlpha = localAlpha;
+                        ctx.drawImage(clip.canvas,0,0,c.width*xScale*globalScale,c.height*xScale*globalScale);		
                         ctx.globalAlpha = localAlpha;
-                    ctx.drawImage(clip.canvas,0,0,c.width*xScale*globalScale,c.height*xScale*globalScale);		
-                    ctx.globalAlpha = localAlpha;
-                }	
+                    }	
+                }
             }
         }
 	}
@@ -302,11 +335,10 @@ videoEditor - intended to be the final version - unnecessary UI elements are rem
 	
 	function skipToTime()
 	{
-		let clipName = document.getElementById("clipName").text;
-		let num = parseInt(document.getElementById("skipTime").value);
+		let clipName = document.getElementById("clipName").value;
+		let seekTime = parseInt(document.getElementById("skipTime").value);
         let track = null;
         let clip = null;
-        let clipIndex = 0;
 
         for (let i=0; i<lecture.tracks.length; i++)
         {
@@ -316,18 +348,19 @@ videoEditor - intended to be the final version - unnecessary UI elements are rem
             {
                 if(track.clips[j].getLabel()==clipName)
                 {
-                    clipIndex = j;
                     clip = track.clips[j];
                 }
             }
+
+            if (clip != null)
+                break;
         }
-				
-		stopAll();
-
-        // TODO: Need to start ALL tracks, and skip forward in time to the appropriate position...
-        track.context.clipIndex = clipIndex;
+        
         globalScale = 0.5;
+        clip.seekTime = seekTime;
+        seeking = true;
 
+        stopAll();        
         startPlaying();
 	}
 	

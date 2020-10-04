@@ -15,6 +15,7 @@ class Clip{
 		this.intro = intro;
         this.canvas = null;
         this.ctx = null;
+        this.seekTime = null;
 
         this._x = x;
 		this._y = y;
@@ -64,7 +65,7 @@ class Clip{
         this.scale = this._scale;
         this.volume = this._volume;        
         this.position = null;
-        this.started = false;
+        this.started = null;
     }
 
     xTransform(x)
@@ -99,7 +100,7 @@ class Clip{
 
     hasStarted()
     {
-        return (this.started);
+        return (this.started != null);
     }
 
     static fromJSON(l)
