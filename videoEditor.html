@@ -295,18 +295,20 @@ videoEditor - intended to be the final version - unnecessary UI elements are rem
                 transition(video.vid.currentTime,clip.start,clip.end);
                     
                 if(video.w != 0 && video.vid.currentTime > clip.start && video.vid.currentTime < clip.end){
-                    let xScale = clip.scale;
-                    let yScale = clip.scale;
+                    let scale = 1.0;
                         
-                    if(video.w < video.h)
-                        xScale = clip.scale*video.w/video.h;
+                    if(video.w > video.h)
+                        scale = clip.scale * (c.width / video.w);
+                    else
+                        scale = clip.scale * (c.height / video.h);
                     
                     if(video.rotation > 0){
-                        video.ctx.drawImage(video.vid,0,0,c.width*xScale,c.height*yScale);
-                        ctx.drawImage(video.canvas,clip.x*globalScale,clip.y*globalScale,c.width*xScale*globalScale,c.height*yScale*globalScale);
+                        video.ctx.clearRect(0,0,video.canvas.width,video.canvas.height);
+                        video.ctx.drawImage(video.vid,0,0,video.w*scale*globalScale,video.h*scale*globalScale);
+                        ctx.drawImage(video.canvas,clip.x*globalScale,clip.y*globalScale,video.canvas.width,video.canvas.height);
                     }
                     else	
-                        ctx.drawImage(video.vid,clip.x*globalScale,clip.y*globalScale,c.width*xScale*globalScale,c.height*yScale*globalScale);
+                        ctx.drawImage(video.vid,clip.x*globalScale,clip.y*globalScale,video.w*scale*globalScale,video.h*scale*globalScale);
 
                     
                     if(clip.intro != null && video.vid.currentTime > clip.intro){
@@ -315,7 +317,7 @@ videoEditor - intended to be the final version - unnecessary UI elements are rem
                             ctx.globalAlpha = video.vid.currentTime - clip.intro;
                         else
                             ctx.globalAlpha = localAlpha;
-                        ctx.drawImage(clip.canvas,0,0,c.width*xScale*globalScale,c.height*xScale*globalScale);		
+                        ctx.drawImage(clip.canvas,0,0,video.w*scale*globalScale,video.h*scale*globalScale);		
                         ctx.globalAlpha = localAlpha;
                     }	
                 }
