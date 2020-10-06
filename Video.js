@@ -14,12 +14,12 @@ class Video{
         if(rotation > 0)
         {
             this.canvas = document.createElement("canvas");
-            this.ctx = v.canvas.getContext("2d");
+            this.ctx = this.canvas.getContext("2d");
             this.canvas.width = c.width;
             this.canvas.height = c.height;
 
             this.ctx.translate(c.width/2,c.height/2);
-            this.ctx.rotate(v.rotation*Math.PI/180);
+            this.ctx.rotate(this.rotation*Math.PI/180);
             this.ctx.translate(-c.width/2,-c.height/2);
         }
     }
