@@ -66,6 +66,7 @@ class Clip{
         this.volume = this._volume;        
         this.position = null;
         this.started = null;
+        this.playing = false;
     }
 
     xTransform(x)

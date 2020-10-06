@@ -60,10 +60,10 @@ videoEditor - intended to be the final version - unnecessary UI elements are rem
 	<canvas id="myCanvas" width="1920" height="1080" style="border:1px solid #c3c3c3;">
 	</canvas>
 
-	<script src="Lecture.js"></script>
-	<script src="Track.js"></script>
-	<script src="Video.js"></script>
-	<script src="Clip.js"></script>
+	<script src="code/Lecture.js"></script>
+	<script src="code/Track.js"></script>
+	<script src="code/Video.js"></script>
+	<script src="code/Clip.js"></script>
 	<script>
     //javascript goes here	
 	
@@ -164,14 +164,52 @@ videoEditor - intended to be the final version - unnecessary UI elements are rem
     {
         ctx.clearRect(0,0,c.width,c.height);
 
-        do
+        if (seeking)
         {
+            // Seeking to at high speed to a given location
+            while (seeking)
+            {
+                // If any clips have just been started, ensure the video player has started playback
+                // before continuing. If we don't, we may close the stream before it starts... 
+                // and it doesn't like that.
+                for (let i=0; i<lecture.tracks.length; i++) 
+                {
+                    let track = lecture.tracks[i];
+                    let clip = track.clips[track.context.clipIndex];
+
+                    if (clip != null && clip != undefined && clip.started != null && !clip.playing)
+                    {
+                        let video = lecture.findVideo(clip.vid);
+                        if (video != null && video.vid != null && video.vid != undefined)
+                        {
+                            if(video.vid.currentTime == 0)
+                            {
+                                timeVar = setTimeout(render,20);
+                                return;
+                            }
+                            else
+                            {
+                                clip.playing = true;
+                            }
+                        }
+                    }
+                }
+
+
+                // Process the next frame
+                for (let i=0; i<lecture.tracks.length; i++) 
+                    draw(lecture.tracks[i]);
+
+                globalTime += 0.020;
+            }
+        }else{
+            // Normal redering
             for (let i=0; i<lecture.tracks.length; i++) 
                 draw(lecture.tracks[i]);
 
             globalTime += 0.020;
-        } while(seeking);
-                    
+        }
+        
 		timeVar = setTimeout(render,20);
     }
 
@@ -179,9 +217,9 @@ videoEditor - intended to be the final version - unnecessary UI elements are rem
     {
         let video = track.context.video;
         let clip = track.clips[track.context.clipIndex];
-        
-        if (clip.isVideo())
-            video.vid.currentTime = clip.position;
+
+        if (clip != null && clip != undefined && clip.isVideo())
+            video.vid.currentTime = clip.start + clip.position;
     }
 
 	function startClip(track)
@@ -359,7 +397,7 @@ videoEditor - intended to be the final version - unnecessary UI elements are rem
         }
         
         globalScale = 0.5;
-        clip.seekTime = seekTime;
+        clip.seekTime = clip.start + seekTime;
         seeking = true;
 
         stopAll();        
