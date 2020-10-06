@@ -107,10 +107,10 @@ class Clip{
     static fromJSON(l)
     {
         // Test if we have a vid, waitFor or action element
-        if (l.vid != null)
+        if (l.play != null)
         {
             // Find the video associated with this clip
-            let v = lecture.findVideo(l.vid);
+            let v = lecture.findVideo(l.play);
             
             // Apply any necessary default scaling
             if(l.x == null)
@@ -120,7 +120,7 @@ class Clip{
             if(l.scale == null)
                 l.scale = 1;			
 
-            return new Clip(l.vid, l.name, l.start, l.end, l.volume, l.x, l.y, l.scale, Clip.CLIP_TYPE_VIDEO, 0, l.intro);						
+            return new Clip(l.play, l.name, l.start, l.end, l.volume, l.x, l.y, l.scale, Clip.CLIP_TYPE_VIDEO, 0, l.intro);						
         }
 
         if (l.waitFor != null)
@@ -128,9 +128,9 @@ class Clip{
             return new Clip(l.waitFor, l.name, null, null, null, null, null, null, Clip.CLIP_TYPE_WAIT_FOR, l.delay, null);	
         }
 
-        if (l.action != null)
+        if (l.change != null)
         {
-            return new Clip(l.action, l.name, null, null, l.volume, l.x, l.y, l.scale, Clip.CLIP_TYPE_ACTION, 0, null);						            
+            return new Clip(l.change, l.name, null, null, l.volume, l.x, l.y, l.scale, Clip.CLIP_TYPE_ACTION, 0, null);						            
         }
 
     }

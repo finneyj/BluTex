@@ -51,8 +51,8 @@ class Track{
         let track = new Track();
 
         // Create Clip instance for each scheduled clip, setting any undefined attributes to their default values.
-        for(let i=0;i<t.clips.length;i++)
-            track.clips[i] = Clip.fromJSON(t.clips[i]);
+        for(let i=0;i<t.channel.length;i++)
+            track.clips[i] = Clip.fromJSON(t.channel[i]);
 
         return track;
     }

@@ -105,8 +105,8 @@ videoEditor - intended to be the final version - unnecessary UI elements are rem
                 lecture.addVideo(Video.fromJSON(l.videos[i]));
 
             // Create a Track instance for each scheduled clip, recursively creating underlying clips.
-            for(let i=0;i<l.tracks.length;i++)
-                lecture.addTrack(Track.fromJSON(l.tracks[i]));
+            for(let i=0;i<l.schedule.length;i++)
+                lecture.addTrack(Track.fromJSON(l.schedule[i]));
         };
 		
 	}
